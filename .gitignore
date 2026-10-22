@@ -1,0 +1,24 @@
+# dependencies
+node_modules/
+
+# next.js
+.next/
+out/
+
+# env
+.env*
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# db (local sqlite vault)
+db/*.db
+db/*.db-journal
+
+# logs
+*.log
+
+# os
+.DS_Store
+
