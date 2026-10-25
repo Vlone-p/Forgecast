@@ -1,4 +1,4 @@
-# Forgecast still under work
+# Forgecast 
 
 Local reverse shell payload generator with an obfuscation pipeline, matched listener commands, and an optional payload vault. Built by [Vlone-p](https://github.com/Vlone-p) for authorized pentesting.
 
