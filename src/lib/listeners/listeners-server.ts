@@ -1,4 +1,4 @@
-import "server only";
+import "server-only";
 import type { PortStatus } from "./listeners";
 
 export async function checkPortInUse(port: number): Promise<PortStatus> {
