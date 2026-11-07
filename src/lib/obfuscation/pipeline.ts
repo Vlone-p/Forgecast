@@ -6,7 +6,10 @@ export type ObfuscatorId =
   | "hex-encode"
   | "xor-encode"
   | "whitespace"
-  | "comment-strip";
+  | "comment-strip"
+  | "rc4-encrypt"
+  | "chunk-reassembly"
+  | "string-array";
 
 export interface ObfuscatorOption {
   key: string;
@@ -58,7 +61,7 @@ const varRename: Obfuscator = {
 const junkInjection: Obfuscator = {
   id: "junk-injection",
   name: "Junk Code Injection",
-  description: "Injects no-op variable assignments and dead code branches to bloat the source and break hash signatures.",
+  description: "Injects no-op assignments and dead code to bloat the source and break hash signatures.",
   supportedLanguages: ["bash", "sh", "python", "perl", "ruby", "powershell", "php", "lua"],
   options: [
     { key: "count", label: "Number of junk lines", type: "number", default: 5 },
@@ -109,7 +112,7 @@ const stringSplit: Obfuscator = {
 const base64Encode: Obfuscator = {
   id: "base64-encode",
   name: "Base64 Encode",
-  description: "Base64-encodes the payload source and wraps it in a language-appropriate eval/decode stub.",
+  description: "Base64 encodes the payload source and wraps it in a language appropriate eval/decode stub.",
   supportedLanguages: ["bash", "sh", "python", "perl", "ruby", "node", "powershell", "php"],
   options: [
     { key: "decoder", label: "Decoder style (auto if blank)", type: "string", default: "" },
@@ -149,7 +152,7 @@ function wrapBase64(b64: string, decoder: string): string {
 const hexEncode: Obfuscator = {
   id: "hex-encode",
   name: "Hex Encode",
-  description: "Hex-encodes the payload and wraps it in a bash printf-based decoder stub.",
+  description: "Hex encodes the payload and wraps it in a bash printf based decoder stub.",
   supportedLanguages: ["bash", "sh", "python", "perl", "powershell"],
   options: [],
   apply: (src) => {
@@ -173,7 +176,7 @@ const hexEncode: Obfuscator = {
 const xorEncode: Obfuscator = {
   id: "xor-encode",
   name: "XOR Encode",
-  description: "XOR-encodes the payload with a single-byte key and embeds a python decoder stub. The original bytes never appear in plaintext.",
+  description: "XOR encodes the payload with a 1-byte key and embeds a python decoder stub. The original bytes never appear in plaintext.",
   supportedLanguages: ["bash", "sh", "python"],
   options: [
     { key: "key", label: "XOR key (1-255)", type: "number", default: 0x5a },
@@ -217,7 +220,7 @@ const whitespace: Obfuscator = {
 const commentStrip: Obfuscator = {
   id: "comment-strip",
   name: "Comment Strip",
-  description: "Strips shell-style comments (# ...) to minimize the source footprint.",
+  description: "Strips shell style comments (# ...) to minimize the source footprint.",
   supportedLanguages: ["bash", "sh", "python", "perl", "ruby", "php", "node"],
   options: [],
   apply: (src) => {
@@ -225,6 +228,111 @@ const commentStrip: Obfuscator = {
       .split("\n")
       .filter((line) => !line.trim().startsWith("#"))
       .join("\n");
+  },
+};
+
+function rc4(key: string, data: string): Uint8Array {
+  const k = new Uint8Array(256);
+  for (let i = 0; i < 256; i++) k[i] = i;
+  let j = 0;
+  for (let i = 0; i < 256; i++) {
+    j = (j + k[i] + key.charCodeAt(i % key.length)) & 0xff;
+    [k[i], k[j]] = [k[j], k[i]];
+  }
+  const out = new Uint8Array(data.length);
+  let a = 0, b = 0;
+  for (let n = 0; n < data.length; n++) {
+    a = (a + 1) & 0xff;
+    b = (b + k[a]) & 0xff;
+    [k[a], k[b]] = [k[b], k[a]];
+    out[n] = data.charCodeAt(n) ^ k[(k[a] + k[b]) & 0xff];
+  }
+  return out;
+}
+
+const rc4Encrypt: Obfuscator = {
+  id: "rc4-encrypt",
+  name: "RC4 Encrypt",
+  description: "RC4 encrypts the payload with a key string and embeds a python decoder stub. Real stream cipher, harder to signature than XOR.",
+  supportedLanguages: ["bash", "sh", "python"],
+  options: [
+    { key: "key", label: "Key string", type: "string", default: "forgecast-key-change-me" },
+  ],
+  apply: (src, opts) => {
+    const key = String(opts.key || "forgecast-key-change-me") || "forgecast-key-change-me";
+    const enc = rc4(key, src);
+    const hexArray = Array.from(enc).map((b) => "0x" + b.toString(16).padStart(2, "0")).join(",");
+    const keyHex = Array.from(new TextEncoder().encode(key)).map((b) => "0x" + b.toString(16).padStart(2, "0")).join(",");
+    return `python3 -c '
+k=bytes([${keyHex}])
+d=bytes([${hexArray}])
+s=[];j=0
+S=list(range(256))
+for i in range(256):
+  j=(j+S[i]+k[i%len(k)])&0xff
+  S[i],S[j]=S[j],S[i]
+a=b=0
+for n in range(len(d)):
+  a=(a+1)&0xff
+  b=(b+S[a])&0xff
+  S[a],S[b]=S[b],S[a]
+  s.append(d[n]^S[(S[a]+S[b])&0xff])
+import os;os.system(bytes(s).decode())
+'`;
+  },
+};
+
+const chunkReassembly: Obfuscator = {
+  id: "chunk-reassembly",
+  name: "Chunked Reassembly",
+  description: "Splits the payload into N chunks stored as separate variables and recombines them at runtime. Defeats length based detection.",
+  supportedLanguages: ["bash", "sh", "python", "perl", "ruby", "node", "powershell"],
+  options: [
+    { key: "chunks", label: "Number of chunks", type: "number", default: 4 },
+  ],
+  apply: (src, opts) => {
+    const n = Math.max(2, Math.min(16, Number(opts.chunks) || 4));
+    const chunkSize = Math.ceil(src.length / n);
+    const chunks: string[] = [];
+    for (let i = 0; i < n; i++) {
+      chunks.push(src.slice(i * chunkSize, (i + 1) * chunkSize));
+    }
+    const lines: string[] = [];
+    chunks.forEach((c, i) => {
+      const b64 = (typeof btoa !== "undefined")
+        ? btoa(unescape(encodeURIComponent(c)))
+        : Buffer.from(c, "utf-8").toString("base64");
+      lines.push(`c${i}=$(echo ${b64} | base64 -d)`);
+    });
+    const reassemble = chunks.map((_, i) => `$c${i}`).join("");
+    lines.push(`eval "${reassemble}"`);
+    return lines.join("\n");
+  },
+};
+
+const stringArray: Obfuscator = {
+  id: "string-array",
+  name: "String Array Indirection",
+  description: "Extracts string literals into an array and replaces them with index lookups. Breaks static string scanning.",
+  supportedLanguages: ["bash", "sh", "python", "perl", "ruby", "node", "php"],
+  options: [],
+  apply: (src) => {
+    const strings: string[] = [];
+    const seen = new Map<string, number>();
+    const extract = (quote: string) => (match: string, content: string) => {
+      if (content.length < 2) return match;
+      if (seen.has(content)) return `_S[${seen.get(content)}]`;
+      const idx = strings.length;
+      seen.set(content, idx);
+      strings.push(content);
+      return `_S[${idx}]`;
+    };
+    let out = src
+      .replace(/"([^"\\]{2,})"/g, extract('"'))
+      .replace(/'([^'\\]{2,})'/g, extract("'"));
+    if (strings.length === 0) return src;
+    const arrDecl = `_S=(${strings.map((s) => `"${s.replace(/"/g, '\\"')}"`).join(" ")})`;
+    return `${arrDecl}\n${out}`;
   },
 };
 
@@ -237,6 +345,9 @@ export const OBFUSCATORS: Obfuscator[] = [
   base64Encode,
   hexEncode,
   xorEncode,
+  rc4Encrypt,
+  chunkReassembly,
+  stringArray,
 ];
 
 export function getObfuscator(id: ObfuscatorId): Obfuscator | undefined {
