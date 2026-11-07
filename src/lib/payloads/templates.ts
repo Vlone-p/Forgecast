@@ -55,7 +55,7 @@ export const PAYLOAD_TEMPLATES: PayloadTemplate[] = [
     os: "linux",
     transport: "tcp",
     description: "Classic bash /dev/tcp reverse shell. Requires bash (not sh).",
-    tags: ["single line", "no-special-chars"],
+    tags: ["single line", "no special chars"],
     listener: "nc",
     build: (v) => {
       const { ip, port } = resolve(v);
@@ -133,7 +133,7 @@ pty.spawn("/bin/bash")
     os: "any",
     transport: "https",
     description: "Python reverse over TLS. Listener must be a TLS endpoint (openssl/socat).",
-    tags: ["tls", "egress-friendly"],
+    tags: ["tls", "egress friendly"],
     listener: "socat",
     build: (v) => {
       const { ip, port } = resolve(v);
@@ -210,7 +210,7 @@ pty.spawn("/bin/sh")
     os: "any",
     transport: "tcp",
     description: "Python3 bind shell. Target opens a port, you connect to it. Use when target can't egress.",
-    tags: ["python3", "bind-shell"],
+    tags: ["python3", "bind shell"],
     listener: "nc",
     build: (v) => {
       const { port } = resolve(v);
@@ -233,7 +233,7 @@ pty.spawn("/bin/sh")
     os: "any",
     transport: "https",
     description: "Python3 TLS reverse shell with proper cert verification. Use a real cert on the listener.",
-    tags: ["python3", "tls", "cert-pinned"],
+    tags: ["python3", "tls", "cert pinned"],
     listener: "socat",
     build: (v) => {
       const { ip, port } = resolve(v);
@@ -275,7 +275,7 @@ exec(d)
     os: "any",
     transport: "tcp",
     description: "Python3 reverse shell built with chr() concatenation. Avoids static string signatures for /bin/sh etc.",
-    tags: ["python3", "evasion-friendly"],
+    tags: ["python3", "evasion friendly"],
     listener: "nc",
     build: (v) => {
       const { ip, port } = resolve(v);
@@ -318,7 +318,7 @@ while True:
     os: "windows",
     transport: "tcp",
     description: "Pure TCP reverse shell via .NET TcpClient. No modules required.",
-    tags: ["windows", "no-modules"],
+    tags: ["windows", "no modules"],
     listener: "nc",
     build: (v) => {
       const { ip, port } = resolve(v);
@@ -366,7 +366,7 @@ while(($i = $ssl.Read($bytes,0,$bytes.Length)) -ne 0){
     os: "windows",
     transport: "tcp",
     description: "Constrained Language Mode friendly payload for hardened hosts.",
-    tags: ["windows", "clm-friendly"],
+    tags: ["windows", "clm friendly"],
     listener: "nc",
     build: (v) => {
       const { ip, port } = resolve(v);
@@ -382,13 +382,13 @@ while(($r=$s.Read($b,0,$b.Length)) -ne 0){
     },
   },
   {
-    id: "nc-traditional",
+    id: "nc traditional",
     name: "Netcat (traditional), -e",
     language: "netcat",
     os: "linux",
     transport: "tcp",
     description: "Classic nc -e. Only works on traditional nc builds (not OpenBSD).",
-    tags: ["single line", "nc-traditional"],
+    tags: ["single line", "nc traditional"],
     listener: "nc",
     build: (v) => {
       const { ip, port } = resolve(v);
@@ -402,7 +402,7 @@ while(($r=$s.Read($b,0,$b.Length)) -ne 0){
     os: "linux",
     transport: "tcp",
     description: "Works on any nc flavor (OpenBSD, busybox). Uses a named fifo for bidirectional I/O.",
-    tags: ["busybox", "openbsd-nc"],
+    tags: ["busybox", "openbsd nc"],
     listener: "nc",
     build: (v) => {
       const { ip, port } = resolve(v);
@@ -458,7 +458,7 @@ while(($r=$s.Read($b,0,$b.Length)) -ne 0){
     os: "any",
     transport: "tcp",
     description: "Standard php reverse shell via fsockopen. For web RCE.",
-    tags: ["webshell-friendly"],
+    tags: ["webshell friendly"],
     listener: "nc",
     build: (v) => {
       const { ip, port } = resolve(v);
@@ -667,7 +667,7 @@ int main() {
     os: "any",
     transport: "tcp",
     description: "Go reverse shell. Cross compile a single static binary. Useful when the target has Go but no python/perl.",
-    tags: ["go", "static-binary", "cross compile"],
+    tags: ["go", "static binary", "cross compile"],
     listener: "nc",
     build: (v) => {
       const { ip, port } = resolve(v);
