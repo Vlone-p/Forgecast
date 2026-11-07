@@ -21,6 +21,11 @@ import {
   buildListenerCommands,
   type ListenerCommand,
 } from "@/lib/listeners/listeners";
+import {
+  wrapOutput,
+  extFor,
+  type OutputFormat,
+} from "@/lib/payloads/output-formats";
 
 interface ForgeState {
   language: Language | "any";
@@ -30,6 +35,7 @@ interface ForgeState {
   port: number;
   selectedTemplateId: string;
   pipeline: PipelineStep[];
+  outputFormat: OutputFormat;
   vaultEnabled: boolean;
   authAck: boolean;
   setLanguage: (l: Language | "any") => void;
@@ -38,6 +44,7 @@ interface ForgeState {
   setIP: (ip: string) => void;
   setPort: (p: number) => void;
   setTemplate: (id: string) => void;
+  setOutputFormat: (f: OutputFormat) => void;
   setVaultEnabled: (b: boolean) => void;
   setAuthAck: (b: boolean) => void;
   addStep: (id: ObfuscatorId) => void;
@@ -54,6 +61,7 @@ export const useForge = create<ForgeState>((set) => ({
   port: 4444,
   selectedTemplateId: "bash-tcp",
   pipeline: [],
+  outputFormat: "raw",
   vaultEnabled: false,
   authAck: false,
   setLanguage: (language) => set({ language }),
@@ -62,6 +70,7 @@ export const useForge = create<ForgeState>((set) => ({
   setIP: (ip) => set({ ip }),
   setPort: (port) => set({ port }),
   setTemplate: (selectedTemplateId) => set({ selectedTemplateId }),
+  setOutputFormat: (outputFormat) => set({ outputFormat }),
   setVaultEnabled: (vaultEnabled) => set({ vaultEnabled }),
   setAuthAck: (authAck) => set({ authAck }),
   addStep: (id) =>
@@ -114,8 +123,18 @@ export function usePayloadSource(): string {
 export function usePipelineResult(): { source: string; output: string; stepOutputs: { id: ObfuscatorId; output: string }[] } {
   const source = usePayloadSource();
   const pipeline = useForge((s) => s.pipeline);
+  const format = useForge((s) => s.outputFormat);
+  const tpl = useCurrentTemplate();
   const result = runPipeline(source, pipeline);
-  return { source, output: result.output, stepOutputs: result.steps };
+  const lang = tpl?.language ?? "bash";
+  const wrapped = wrapOutput(result.output, format, lang);
+  return { source, output: wrapped, stepOutputs: result.steps };
+}
+
+export function useOutputExt(): string {
+  const format = useForge((s) => s.outputFormat);
+  const tpl = useCurrentTemplate();
+  return extFor(format, tpl?.language ?? "bash");
 }
 
 export function useListenerCommands(): ListenerCommand[] {

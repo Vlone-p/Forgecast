@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Copy, Check, FileDown } from "lucide-react";
-import { usePipelineResult, useForge, useCurrentTemplate } from "./store";
+import { usePipelineResult, useForge, useCurrentTemplate, useOutputExt } from "./store";
+import { OUTPUT_FORMATS } from "@/lib/payloads/output-formats";
 import { toast } from "sonner";
 
 function CopyButton({ text }: { text: string }) {
@@ -34,24 +35,9 @@ function CopyButton({ text }: { text: string }) {
 export function PayloadPreview() {
   const { source, output, stepOutputs } = usePipelineResult();
   const tpl = useCurrentTemplate();
-  const { ip, port } = useForge();
+  const { ip, port, outputFormat, setOutputFormat } = useForge();
+  const ext = useOutputExt();
   const [activeTab, setActiveTab] = useState("final");
-
-  const ext = useMemo(() => {
-    if (!tpl) return "txt";
-    switch (tpl.language) {
-      case "powershell": return "ps1";
-      case "python": return "py";
-      case "ruby": return "rb";
-      case "perl": return "pl";
-      case "php": return "php";
-      case "node": return "js";
-      case "java": return "java";
-      case "bash":
-      case "sh": return "sh";
-      default: return "txt";
-    }
-  }, [tpl]);
 
   function download(text: string, filename: string) {
     try {
@@ -89,11 +75,25 @@ export function PayloadPreview() {
             <span className="text-[11px] fc-mono font-medium text-primary truncate">{tpl.name}</span>
           </div>
           <div className="flex items-center gap-1 shrink-0">
+            <div className="fc-segment h-6">
+              {OUTPUT_FORMATS.map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  className="fc-segment-btn h-4 px-1.5 text-[9px] fc-mono uppercase"
+                  data-active={outputFormat === f.id ? "true" : "false"}
+                  onClick={() => setOutputFormat(f.id)}
+                  title={f.description}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
             <CopyButton text={output} />
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7"
+              className="h-6 w-6"
               onClick={() => download(output, filename)}
               title={`save as ${filename}`}
             >

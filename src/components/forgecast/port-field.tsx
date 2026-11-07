@@ -7,7 +7,7 @@ import { ChevronUp, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { useForge } from "./store";
 import { toast } from "sonner";
 
-type FetchStatus = "free" | "in-use" | "error";
+type FetchStatus = "free" | "in use" | "error";
 
 interface PortCheck {
   last: FetchStatus | null;
@@ -36,7 +36,7 @@ export function PortField() {
           return;
         }
         setCheck({
-          last: data.inUse ? "in-use" : "free",
+          last: data.inUse ? "in use" : "free",
           allowed: data.allowed,
           port,
         });
@@ -97,7 +97,7 @@ export function PortField() {
           {invalid && <AlertCircle className="h-3 w-3 text-destructive" />}
           {!invalid && isChecking && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
           {!invalid && !isChecking && last === "free" && <CheckCircle2 className="h-3 w-3 text-primary" />}
-          {!invalid && !isChecking && last === "in-use" && <AlertCircle className="h-3 w-3 text-destructive" />}
+          {!invalid && !isChecking && last === "in use" && <AlertCircle className="h-3 w-3 text-destructive" />}
           {!invalid && !isChecking && last === "error" && <AlertCircle className="h-3 w-3 text-muted-foreground" />}
         </div>
       </div>
@@ -110,7 +110,7 @@ export function PortField() {
         {!invalid && !isChecking && last === "free" && check.allowed !== false && (
           <span className="text-primary">free</span>
         )}
-        {!invalid && !isChecking && last === "in-use" && (
+        {!invalid && !isChecking && last === "in use" && (
           <span className="text-destructive">in use</span>
         )}
         {!invalid && !isChecking && last === "error" && <span className="text-muted-foreground">err</span>}

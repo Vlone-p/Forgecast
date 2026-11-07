@@ -35,6 +35,9 @@ const LANGUAGES: { value: Language | "any"; label: string }[] = [
   { value: "lua", label: "lua" },
   { value: "awk", label: "awk" },
   { value: "telnet", label: "telnet" },
+  { value: "csharp", label: "c#" },
+  { value: "c", label: "c" },
+  { value: "go", label: "go" },
 ];
 
 const OSES: { value: OS | "any"; label: string }[] = [

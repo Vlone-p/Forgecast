@@ -69,7 +69,7 @@ export function VaultPanel({ open, onOpenChange }: { open: boolean; onOpenChange
         <SheetHeader>
           <SheetTitle className="text-sm fc-mono">vault</SheetTitle>
           <SheetDescription className="text-[11px]">
-            opt-in local storage. disabled by default.
+            opt in local storage. disabled by default.
             when off, no payloads are written to disk.
           </SheetDescription>
         </SheetHeader>
