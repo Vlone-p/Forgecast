@@ -28,18 +28,18 @@ export function buildListenerCommands(opts: {
     cmds.push({
       tool: "nc",
       command: `nc -lvnp ${port}`,
-      notes: "Standard netcat listener. -k for keep-alive across disconnects on some flavors.",
+      notes: "Standard netcat listener. -k for keep-alive across disconnects (some flavors).",
       recommended: true,
     });
     cmds.push({
       tool: "socat",
       command: `socat -d -d TCP-LISTEN:${port},reuseaddr,fork STDOUT`,
-      notes: "socat. Better for multi-session / scripted handling.",
+      notes: "socat. Better for multiple sessions / scripted handling.",
     });
     cmds.push({
       tool: "pwncat",
       command: `pwncat-cs -lp ${port}`,
-      notes: "pwncat-cs. Full-featured post-exploitation framework. Auto-upgrades PTY, has upload/download.",
+      notes: "pwncat-cs. Full featured post exploitation framework. Auto upgrades PTY, has upload / download.",
     });
     if (language === "powershell") {
       cmds.push({
@@ -75,7 +75,7 @@ export function buildListenerCommands(opts: {
     cmds.push({
       tool: "ncat",
       command: `ncat --ssl -lvnp ${port}`,
-      notes: "ncat (Nmap) SSL listener. Easiest one-liner if you have ncat installed.",
+      notes: "ncat (Nmap) SSL listener. Easiest single line if you have ncat installed.",
     });
   } else if (transport === "http") {
     cmds.push({
@@ -87,7 +87,7 @@ export function buildListenerCommands(opts: {
     cmds.push({
       tool: "nc",
       command: `while true; do echo -e "HTTP/1.1 200 OK\\n\\n" | nc -lvnp ${port}; done`,
-      notes: "Quick HTTP-aware listener loop. Use pwncat-cs http listener for real Beacons.",
+      notes: "Quick HTTP aware listener loop. Use pwncat-cs http listener for real Beacons.",
     });
   } else if (transport === "dns") {
     cmds.push({
