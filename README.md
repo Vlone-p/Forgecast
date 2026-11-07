@@ -1,36 +1,49 @@
-# Forgecast 
+# Forgecast
 
 Local reverse shell payload generator with an obfuscation pipeline, matched listener commands, and an optional payload vault. Built by [Vlone-p](https://github.com/Vlone-p) for authorized pentesting.
 
 ## What it is
 
-Forgecast is a self-hosted tool for generating, obfuscating, and optionally tracking reverse shell payloads. Unlike static payload cheatsheets, it gives you a composable obfuscation pipeline. Chain transforms in any order, preview the output at every step, and auto-match a listener command to the payload's transport.
+Forgecast is a self hosted tool for generating, obfuscating, and optionally tracking reverse shell payloads. Unlike static payload cheatsheets, it gives you a composable obfuscation pipeline. Chain transforms in any order, preview the output at every step, and auto match a listener command to the payload's transport.
 
-It runs on `localhost`. No telemetry, no callbacks home, no third-party APIs. Payloads never leave your machine unless you explicitly copy, save, or download them.
+It runs on `localhost`. No telemetry, no callbacks home, no third party APIs. Payloads never leave your machine unless you explicitly copy, save, or download them.
 
 ### Features
 
-Curated payload library with 20+ templates across Bash, sh, Python, PowerShell, Netcat/Ncat, Perl, PHP, Ruby, Node.js, Java, Groovy, Lua, AWK, and Telnet. Each template is organized by language, OS, and transport (TCP, UDP, TLS, HTTP, DNS).
+Curated payload library with 30+ templates across Bash, sh, Python, PowerShell, Netcat/Ncat, Perl, PHP, Ruby, Node.js, Java, Groovy, Lua, AWK, Telnet, C# (.NET), C, and Go. Each template is organized by language, OS, and transport (TCP, UDP, TLS, HTTP, DNS).
 
-Obfuscation pipeline with 8 transforms you can chain in any order and preview at every step:
-- Comment strip
-- Variable rename (random identifiers, configurable seed and length)
-- String splitting (chunk long literals for runtime recombination)
-- Junk code injection (no-op dead branches, configurable count)
-- Whitespace randomization (configurable intensity)
-- Base64 encode with bash, python, perl, powershell, node, and php decoder stubs
-- Hex encode with bash printf decoder
-- XOR encode with single-byte key and python decoder stub (original bytes never appear in plaintext)
+Python3 variety: single line, staged, subprocess.Popen, IPv6, bind shell, SSL with cert verification, staged dropper, no raw strings (chr() obfuscated), DNS exfil.
 
-Smart port-in-use detection. Checks `/proc/net/tcp` on Linux with a TCP bind-probe fallback. The "next free" button auto-skips in-use ports.
+Obfuscation pipeline with 11 transforms you can chain in any order and preview at every step:
 
-Auto-matched listener commands. Given the payload's transport, the right `nc`, `socat`, `pwncat-cs`, `openssl s_server`, or `ncat --ssl` command is suggested with copy buttons.
+* Comment strip
+* Variable rename (random identifiers, configurable seed and length)
+* String splitting (chunk long literals for runtime recombination)
+* Junk code injection (no op code, configurable count)
+* Whitespace randomization (configurable intensity)
+* Base64 encode with bash, python, perl, powershell, node, and php decoder stubs
+* Hex encode with bash printf decoder
+* XOR encode with 1 byte key and python decoder stub (original bytes never appear in plaintext)
+* RC4 encrypt with key string and python decoder stub (real stream cipher)
+* Chunked reassembly (splits payload into N base64 chunks recombined at runtime)
+* String array indirection (extracts string literals into an array, replaces with index lookups)
 
-Optional payload vault. Opt-in via the Vault drawer. When enabled, every generated payload can be saved to local SQLite with a label, target/engagement tag, and status lifecycle (unused, fired, caught, failed, archived). Default: off.
+Output format selector wraps the final payload in your chosen container:
 
-Authorization gate. First-launch banner requires explicit "I have authorization" attestation before the tool is usable. Persisted in local DB, resettable from the Vault drawer.
+* raw (payload as is)
+* script (standalone script with language appropriate shebang)
+* hta (HTML Application for Windows double click execution)
+* vba (Office VBA macro that runs the payload via Shell())
 
-Three themes: Amber (default), Dark, Light. Toggle in the top-right.
+Smart port in use detection. Checks `/proc/net/tcp` on Linux with a TCP bind probe fallback. The "next free" button auto skips ports that are in use.
+
+Listener commands match automatically. Given the payload's transport, the right `nc`, `socat`, `pwncat-cs`, `openssl s_server`, or `ncat --ssl` command is suggested with copy buttons.
+
+Optional payload vault. Opt in via the Vault drawer. When enabled, every generated payload can be saved to local SQLite with a label, target/engagement tag, and status lifecycle (unused, fired, caught, failed, archived). Default: off.
+
+Authorization gate. The first launch banner requires explicit "I have authorization" attestation before the tool is usable. Persisted in local DB, resettable from the Vault drawer.
+
+Three themes: Amber (default), Dark, Light. Toggle in the top right.
 
 ### What it is not
 
@@ -89,31 +102,34 @@ npm run start
 Accept the authorization banner on first launch. The attestation is persisted in the local DB. You can reset it any time from the Vault drawer.
 
 Configure the payload (left panel):
-- Pick a language (Bash, Python, PowerShell, etc.)
-- Pick target OS (Linux, Windows, macOS, any)
-- Pick a transport (TCP, UDP, TLS, HTTP, DNS)
-- Enter your callback IP and port
-- The template dropdown filters to match your selection
-- The port field shows live in-use status. Click "next free" to skip in-use ports.
+
+* Pick a language (Bash, Python, PowerShell, etc.)
+* Pick target OS (Linux, Windows, macOS, any)
+* Pick a transport (TCP, UDP, TLS, HTTP, DNS)
+* Enter your callback IP and port
+* The template dropdown filters to match your selection
+* The port field shows live in use status. Click "next free" to skip ports that are in use.
 
 Add obfuscation steps (left panel, below config):
-- Click "+ add step" and pick a transform
-- Reorder with the chevron buttons, remove with x
-- Each step's options are editable inline
-- The payload preview (middle column) updates live
+
+* Click "+ add step" and pick a transform
+* Reorder with the chevron buttons, remove with x
+* Each step's options are editable inline
+* The payload preview (middle column) updates live
 
 Preview the output (middle panel):
-- `final` is what you'll actually run
-- `raw` is the unmodified template output after variable substitution
-- `steps` is the step-by-step transformation chain, with the final output highlighted
+
+* `final` is what you'll actually run
+* `raw` is the unmodified template output after variable substitution
+* `steps` is the transformation chain, with the final output highlighted
 
 Copy or save the payload. Copy button copies the final output to clipboard. Save button downloads it as a file with the right extension (`.sh`, `.ps1`, `.py`, etc.).
 
-Run the matched listener (right panel). The recommended listener command for the payload's transport is shown with copy buttons. You start the listener yourself in a terminal. Forgecast does not manage listeners in-app.
+Run the matched listener (right panel). The recommended listener command for the payload's transport is shown with copy buttons. You start the listener yourself in a terminal. Forgecast does not manage listeners in the app.
 
-Optional: save to vault. Open the Vault drawer (top-right), enable the vault, then save the current payload with a label and optional target/engagement tag. Status can be tracked through `unused → fired → caught → failed → archived`.
+Optional: save to vault. Open the Vault drawer (top right), enable the vault, then save the current payload with a label and optional target/engagement tag. Status can be tracked through `unused → fired → caught → failed → archived`.
 
-Switch themes with the icon group in the top-right. Amber is the default.
+Switch themes with the icon group in the top right. Amber is the default.
 
 ## Tech stack
 
@@ -133,31 +149,32 @@ Switch themes with the icon group in the top-right. Amber is the default.
 ```
 src/
 ├── app/
-│   ├── page.tsx                    # single-page UI
+│   ├── page.tsx                    # single page UI
 │   ├── layout.tsx                  # root layout
 │   ├── globals.css                 # amber / dark / light theme vars
 │   └── api/
 │       ├── payloads/route.ts       # vault CRUD
-│       ├── ports/route.ts          # port-in-use check + next-free
+│       ├── ports/route.ts          # port in use check + next free
 │       └── settings/route.ts        # AppSettings singleton
 ├── components/
 │   ├── forgecast/
 │   │   ├── store.ts                # zustand store + derived hooks
 │   │   ├── configurator.tsx        # config + pipeline builder
-│   │   ├── port-field.tsx          # port input with in-use detection
+│   │   ├── port-field.tsx          # port input with in use detection
 │   │   ├── payload-preview.tsx     # final / raw / steps tabs
 │   │   ├── listener-panel.tsx      # matched listener commands
-│   │   ├── vault-panel.tsx         # vault drawer (opt-in)
-│   │   ├── auth-banner.tsx         # first-launch authorization gate
+│   │   ├── vault-panel.tsx         # vault drawer (opt in)
+│   │   ├── auth-banner.tsx         # first launch authorization gate
 │   │   └── theme-switcher.tsx      # amber / dark / light toggle
 │   ├── theme-provider.tsx
 │   └── ui/                          # shadcn/ui
 └── lib/
     ├── payloads/templates.ts       # payload library
-    ├── obfuscation/pipeline.ts     # 8 transforms + pipeline runner
+    ├── payloads/output-formats.ts  # raw / script / hta / vba wrappers
+    ├── obfuscation/pipeline.ts     # 11 transforms + pipeline runner
     ├── listeners/
-    │   ├── listeners.ts            # client-safe: command generator
-    │   └── listeners-server.ts     # server-only: port-in-use check
+    │   ├── listeners.ts            # client only: command generator
+    │   └── listeners-server.ts     # server only: port in use check
     ├── db.ts
     └── utils.ts
 prisma/
@@ -172,11 +189,21 @@ By using this tool you confirm that:
 
 1. You own, or have explicit written authorization to test, every system you generate payloads against.
 2. You understand the legal implications of unauthorized computer access in your jurisdiction.
-3. You will not use Forgecast to facilitate unauthorized access, damage, theft, or disruption of systems you do not have permission to test.
+3. You will not use Forgecast to perform unauthorized access, damage, theft, or disruption of systems you do not have permission to test.
 
-The first-launch authorization banner is a one-time attestation. Reset it any time from the Vault drawer if you need to re-confirm on a new engagement or with a new operator.
+The first launch authorization banner is a single attestation. Reset it any time from the Vault drawer if you need to reconfirm on a new engagement or with a new operator.
 
 The payload vault is disabled by default. When disabled, no payloads are written to disk. They exist only in browser memory for the duration of your session.
+
+## Roadmap
+
+Not in beta:
+
+* Composable generation (transport x language x stage x format, generate not pick)
+* Custom payload authoring (define your own templates in the app)
+* Export vault to engagement report (PDF / DOCX)
+* Integration hooks for `viper` (your port scanner) for service aware payload suggestion
+* Listener command history
 
 ## License
 
