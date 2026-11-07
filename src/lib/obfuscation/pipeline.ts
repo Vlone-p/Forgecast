@@ -256,10 +256,10 @@ const rc4Encrypt: Obfuscator = {
   description: "RC4 encrypts the payload with a key string and embeds a python decoder stub. Real stream cipher, harder to signature than XOR.",
   supportedLanguages: ["bash", "sh", "python"],
   options: [
-    { key: "key", label: "Key string", type: "string", default: "forgecast-key-change-me" },
+    { key: "key", label: "Key string", type: "string", default: "forgecast_change_this_key" },
   ],
   apply: (src, opts) => {
-    const key = String(opts.key || "forgecast-key-change-me") || "forgecast-key-change-me";
+    const key = String(opts.key || "forgecast_change_this_key") || "forgecast_change_this_key";
     const enc = rc4(key, src);
     const hexArray = Array.from(enc).map((b) => "0x" + b.toString(16).padStart(2, "0")).join(",");
     const keyHex = Array.from(new TextEncoder().encode(key)).map((b) => "0x" + b.toString(16).padStart(2, "0")).join(",");
